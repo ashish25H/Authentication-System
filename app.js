@@ -58,4 +58,40 @@ app.post("/register", async (req, res) => {
   }
 });
 
+app.post('/login', async (req,res) => {
+  try{
+    const {email, password} = req.body;
+
+    if(!(email && password)){
+      res.status(400).send('Field is missing');
+    }
+
+
+    const user = await User.findOne({email});
+
+    // if(!user){
+    //   res.status(400).send('You are not register in our app');
+    // }
+
+    if(user && (await bcrypt.compare(password,user.password))){
+      const token = jwt.sign(
+        {user_id: user._id, email},
+        process.env.SECRET_KEY,
+        {
+          expiresIn:'2h'
+        }
+      )
+      user.token = token
+      user.password = undefined
+      res.status(200).json(user)
+    }
+
+    res.status(400).send("email and password not register")
+
+
+  }catch(err){
+    console.log(err);
+  }
+});
+
 module.exports = app;
